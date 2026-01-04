@@ -11,8 +11,8 @@ import {
   Grid,
 } from '@mui/material';
 import SettingsIcon from '@mui/icons-material/Settings';
-import CalculateIcon from '@mui/icons-material/Calculate';
 import theme from './lib/theme';
+import logoUrl from '@assets/DivvyPlan_Logo_1767558279552.png';
 import SettingsDrawer from './components/SettingsDrawer';
 import DealInputsCard from './components/DealInputsCard';
 import DirectorsCard from './components/DirectorsCard';
@@ -115,15 +115,14 @@ function App() {
           }}
         >
           <Toolbar>
-            <CalculateIcon sx={{ mr: 1.5, color: 'primary.main' }} />
-            <Typography
-              variant="h6"
-              component="h1"
-              sx={{ flexGrow: 1, fontWeight: 700 }}
-              data-testid="text-app-title"
-            >
-              DivvyPlan
-            </Typography>
+            <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center' }}>
+              <img 
+                src={logoUrl} 
+                alt="DivvyPlan" 
+                style={{ height: 32 }}
+                data-testid="img-logo"
+              />
+            </Box>
             <IconButton
               edge="end"
               onClick={() => setSettingsDrawerOpen(true)}
