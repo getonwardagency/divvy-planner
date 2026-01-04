@@ -83,6 +83,17 @@ export default function DealInputsCard({
     onDealInputChange({ ...dealInput, vatRegistered: e.target.checked });
   };
 
+  const handleExpensesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    const amount = parseFloat(value);
+    if (value === '' || (!isNaN(amount) && amount >= 0)) {
+      onDealInputChange({
+        ...dealInput,
+        dealExpenses: value === '' ? 0 : amount,
+      });
+    }
+  };
+
   const showEmptyState = dealInput.dealAmount <= 0;
 
   return (
@@ -92,7 +103,7 @@ export default function DealInputsCard({
           Deal Inputs
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-          Planning tool only — expenses are ignored
+          Planning tool only — not tax advice
         </Typography>
 
         <TextField
@@ -106,8 +117,23 @@ export default function DealInputsCard({
             startAdornment: <InputAdornment position="start">£</InputAdornment>,
           }}
           helperText="Enter the invoice value for the client"
-          sx={{ mb: 3 }}
+          sx={{ mb: 2 }}
           data-testid="input-deal-amount"
+        />
+
+        <TextField
+          label="Deal Expenses"
+          type="number"
+          value={dealInput.dealExpenses || ''}
+          onChange={handleExpensesChange}
+          fullWidth
+          placeholder="0.00"
+          InputProps={{
+            startAdornment: <InputAdornment position="start">£</InputAdornment>,
+          }}
+          helperText="Costs associated with this deal (deducted before tax)"
+          sx={{ mb: 3 }}
+          data-testid="input-deal-expenses"
         />
 
         <Box sx={{ mb: 3 }}>

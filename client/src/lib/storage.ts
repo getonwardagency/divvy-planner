@@ -13,6 +13,7 @@ export interface AppState {
 export const DEFAULT_STATE: AppState = {
   dealInput: {
     dealAmount: 0,
+    dealExpenses: 0,
     includesVAT: true,
     vatRegistered: true,
   },
@@ -55,6 +56,7 @@ export function loadLastState(settings: Settings): AppState {
         dealInput: {
           ...DEFAULT_STATE.dealInput,
           ...parsed.dealInput,
+          dealExpenses: parsed.dealInput?.dealExpenses ?? 0,
           includesVAT: parsed.dealInput?.includesVAT ?? settings.defaultIncludesVAT,
           vatRegistered: parsed.dealInput?.vatRegistered ?? settings.defaultVATRegistered,
         },

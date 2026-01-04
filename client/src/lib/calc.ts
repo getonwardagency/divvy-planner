@@ -31,6 +31,7 @@ export interface Director {
 
 export interface DealInput {
   dealAmount: number;
+  dealExpenses: number;
   includesVAT: boolean;
   vatRegistered: boolean;
 }
@@ -38,6 +39,8 @@ export interface DealInput {
 export interface DealBreakdown {
   net: number;
   vat: number;
+  expenses: number;
+  profit: number;
   corpTax: number;
   dividendPool: number;
 }
@@ -86,6 +89,7 @@ export function calculateDealBreakdown(
   settings: Settings
 ): DealBreakdown {
   const dealAmountPence = toPence(input.dealAmount);
+  const expensesPence = toPence(input.dealExpenses);
 
   let netPence: number;
   let vatPence: number;
@@ -101,12 +105,15 @@ export function calculateDealBreakdown(
     vatPence = roundPence(dealAmountPence * settings.vatRate);
   }
 
-  const corpTaxPence = roundPence(netPence * settings.corpTaxRate);
-  const dividendPoolPence = netPence - corpTaxPence;
+  const profitPence = Math.max(0, netPence - expensesPence);
+  const corpTaxPence = roundPence(profitPence * settings.corpTaxRate);
+  const dividendPoolPence = profitPence - corpTaxPence;
 
   return {
     net: fromPence(netPence),
     vat: fromPence(vatPence),
+    expenses: fromPence(expensesPence),
+    profit: fromPence(profitPence),
     corpTax: fromPence(corpTaxPence),
     dividendPool: fromPence(dividendPoolPence),
   };
@@ -249,11 +256,14 @@ export function generateCopySummary(
     `================`,
     ``,
     `Deal Amount: £${input.dealAmount.toFixed(2)}`,
+    input.dealExpenses > 0 ? `Deal Expenses: £${input.dealExpenses.toFixed(2)}` : '',
     `VAT Registered: ${input.vatRegistered ? 'Yes' : 'No'}`,
     input.vatRegistered ? `VAT Treatment: ${input.includesVAT ? 'Includes VAT' : 'Excludes VAT'}` : '',
     ``,
     `Breakdown:`,
     `  Net (ex VAT): £${breakdown.net.toFixed(2)}`,
+    input.dealExpenses > 0 ? `  Expenses: £${breakdown.expenses.toFixed(2)}` : '',
+    input.dealExpenses > 0 ? `  Profit: £${breakdown.profit.toFixed(2)}` : '',
     `  VAT: £${breakdown.vat.toFixed(2)}`,
     `  Corporation Tax (${(settings.corpTaxRate * 100).toFixed(0)}%): £${breakdown.corpTax.toFixed(2)}`,
     `  Dividend Pool: £${breakdown.dividendPool.toFixed(2)}`,
