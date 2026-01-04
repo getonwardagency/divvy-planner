@@ -57,7 +57,7 @@ export default function ResultsSummary({ breakdown, result, isEmpty }: ResultsSu
   return (
     <Box sx={{ mb: 3 }} data-testid="section-results-summary">
       <Grid container spacing={2}>
-        <Grid item xs={6} md={2.4}>
+        <Grid size={{ xs: 6, md: 2.4 }}>
           <SummaryTile
             label="VAT Pot"
             value={isEmpty ? '—' : formatGBP(breakdown?.vat || 0)}
@@ -65,7 +65,7 @@ export default function ResultsSummary({ breakdown, result, isEmpty }: ResultsSu
             testId="tile-vat-pot"
           />
         </Grid>
-        <Grid item xs={6} md={2.4}>
+        <Grid size={{ xs: 6, md: 2.4 }}>
           <SummaryTile
             label="Corp Tax"
             value={isEmpty ? '—' : formatGBP(breakdown?.corpTax || 0)}
@@ -73,7 +73,7 @@ export default function ResultsSummary({ breakdown, result, isEmpty }: ResultsSu
             testId="tile-corp-tax"
           />
         </Grid>
-        <Grid item xs={6} md={2.4}>
+        <Grid size={{ xs: 6, md: 2.4 }}>
           <SummaryTile
             label="Dividend Pool"
             value={isEmpty ? '—' : formatGBP(breakdown?.dividendPool || 0)}
@@ -81,7 +81,7 @@ export default function ResultsSummary({ breakdown, result, isEmpty }: ResultsSu
             testId="tile-dividend-pool"
           />
         </Grid>
-        <Grid item xs={6} md={2.4}>
+        <Grid size={{ xs: 6, md: 2.4 }}>
           <SummaryTile
             label="Total Tax"
             value={isEmpty ? '—' : formatGBP(result?.totalPersonalTax || 0)}
@@ -89,7 +89,7 @@ export default function ResultsSummary({ breakdown, result, isEmpty }: ResultsSu
             testId="tile-total-tax"
           />
         </Grid>
-        <Grid item xs={12} md={2.4}>
+        <Grid size={{ xs: 12, md: 2.4 }}>
           <SummaryTile
             label="Take-Home"
             value={isEmpty ? '—' : formatGBP(result?.totalTakeHome || 0)}

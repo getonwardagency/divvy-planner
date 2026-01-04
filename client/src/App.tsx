@@ -151,7 +151,7 @@ function App() {
           />
 
           <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                 <DealInputsCard
                   dealInput={appState.dealInput}
@@ -166,7 +166,7 @@ function App() {
                 />
               </Box>
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                 <DirectorsCard
                   directors={appState.directors}

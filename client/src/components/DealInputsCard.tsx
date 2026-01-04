@@ -153,27 +153,27 @@ export default function DealInputsCard({
             Breakdown
           </Typography>
           <Grid container spacing={2}>
-            <Grid item xs={6}>
+            <Grid size={6}>
               <StatBlock
                 label="Net (ex VAT)"
                 value={showEmptyState ? '—' : formatGBP(breakdown?.net || 0)}
               />
             </Grid>
-            <Grid item xs={6}>
+            <Grid size={6}>
               <StatBlock
                 label="VAT Pot"
                 value={showEmptyState ? '—' : formatGBP(breakdown?.vat || 0)}
                 color="#f59e0b"
               />
             </Grid>
-            <Grid item xs={6}>
+            <Grid size={6}>
               <StatBlock
                 label="Corporation Tax"
                 value={showEmptyState ? '—' : formatGBP(breakdown?.corpTax || 0)}
                 color="#ef4444"
               />
             </Grid>
-            <Grid item xs={6}>
+            <Grid size={6}>
               <StatBlock
                 label="Dividend Pool"
                 value={showEmptyState ? '—' : formatGBP(breakdown?.dividendPool || 0)}
