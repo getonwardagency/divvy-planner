@@ -64,15 +64,15 @@ export default function DirectorsTable({
         </Typography>
 
         <TableContainer sx={{ mb: 3, borderRadius: 2, overflowX: 'auto' }}>
-          <Table size="small">
+          <Table size="small" sx={{ minWidth: 600 }}>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontWeight: 600 }}>Director</TableCell>
-                <TableCell align="right" sx={{ fontWeight: 600 }}>Split</TableCell>
-                <TableCell align="right" sx={{ fontWeight: 600 }}>Dividend Share</TableCell>
-                <TableCell align="right" sx={{ fontWeight: 600 }}>Tax Rate</TableCell>
-                <TableCell align="right" sx={{ fontWeight: 600 }}>Personal Tax</TableCell>
-                <TableCell align="right" sx={{ fontWeight: 600 }}>Take-Home</TableCell>
+                <TableCell sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}>Director</TableCell>
+                <TableCell align="right" sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}>Split</TableCell>
+                <TableCell align="right" sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}>Dividend Share</TableCell>
+                <TableCell align="right" sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}>Tax Rate</TableCell>
+                <TableCell align="right" sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}>Personal Tax</TableCell>
+                <TableCell align="right" sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}>Take-Home</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -85,7 +85,7 @@ export default function DirectorsTable({
               ) : (
                 directors.map((director) => (
                   <TableRow key={director.id} data-testid={`row-result-${director.id}`}>
-                    <TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                         {director.name}
                         {director.adjustedByPenny && (
@@ -97,35 +97,35 @@ export default function DirectorsTable({
                     </TableCell>
                     <TableCell
                       align="right"
-                      sx={{ fontVariantNumeric: 'tabular-nums' }}
+                      sx={{ fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}
                       data-testid={`cell-split-${director.id}`}
                     >
                       {(director.splitPercent * 100).toFixed(2)}%
                     </TableCell>
                     <TableCell
                       align="right"
-                      sx={{ fontVariantNumeric: 'tabular-nums' }}
+                      sx={{ fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}
                       data-testid={`cell-dividend-share-${director.id}`}
                     >
                       {formatGBP(director.dividendShare)}
                     </TableCell>
                     <TableCell
                       align="right"
-                      sx={{ fontVariantNumeric: 'tabular-nums' }}
+                      sx={{ fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}
                       data-testid={`cell-tax-rate-${director.id}`}
                     >
                       {(director.appliedRate * 100).toFixed(2)}%
                     </TableCell>
                     <TableCell
                       align="right"
-                      sx={{ fontVariantNumeric: 'tabular-nums' }}
+                      sx={{ fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}
                       data-testid={`cell-personal-tax-${director.id}`}
                     >
                       {formatGBP(director.personalDividendTax)}
                     </TableCell>
                     <TableCell
                       align="right"
-                      sx={{ fontVariantNumeric: 'tabular-nums', fontWeight: 600 }}
+                      sx={{ fontVariantNumeric: 'tabular-nums', fontWeight: 600, whiteSpace: 'nowrap' }}
                       data-testid={`cell-take-home-${director.id}`}
                     >
                       {formatGBP(director.takeHome)}
