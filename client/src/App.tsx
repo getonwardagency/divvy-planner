@@ -138,9 +138,7 @@ function App() {
             <Typography variant="h5" sx={{ mb: 1 }} data-testid="text-page-title">
               Deal-to-Dividends Calculator
             </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Plan how a client deal converts to dividends for company directors. This is an internal planning tool only — not tax advice.
-            </Typography>
+            <Typography variant="body2" color="text.secondary">Plan how a client deal converts to dividends for company directors.</Typography>
           </Box>
 
           <ResultsSummary
