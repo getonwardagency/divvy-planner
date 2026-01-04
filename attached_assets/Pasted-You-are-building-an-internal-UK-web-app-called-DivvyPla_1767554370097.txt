@@ -1,0 +1,332 @@
+You are building an internal UK web app called “DivvyPlan”.
+
+Purpose
+DivvyPlan is a simple “deal-to-dividends” planning calculator for small company directors. The user enters a client/deal invoice amount (e.g., £5,000). The app:
+1) subtracts VAT (if applicable)
+2) subtracts Corporation Tax at 25% (ignore expenses)
+3) treats the remainder as the dividend pool
+4) splits the dividend pool across directors
+5) calculates each director’s personal dividend tax using a chosen effective dividend tax rate (single rate assumption)
+
+This is an INTERNAL planning tool only — NOT tax advice.
+
+Tech requirements
+- Use Vite + React + TypeScript.
+- Use Material UI (MUI) components. The UI must look slick and follow Material 3 design principles (spacing, typography, elevation, rounded corners, good empty state).
+- No backend. Persist settings and last-used values in LocalStorage.
+- Put all calculation logic in pure functions in src/lib so it is fully unit-testable.
+- Add a unit test suite with Vitest for the maths engine.
+- Add a basic README.md with how to run dev and tests.
+
+Core assumptions (must be shown clearly in the UI)
+- Expenses are ignored (profit assumed to equal net sales).
+- Corporation Tax is treated as a flat rate (default 25%).
+- Dividend tax is treated as a single effective rate chosen by the user (no banding across thresholds).
+
+App layout requirements
+- Top AppBar with title “DivvyPlan” and a Settings icon that opens a right-side Drawer.
+- Main content in a centred Container with Cards/Papers.
+- Responsive layout for mobile and desktop.
+
+Main screen sections (single page)
+A) Deal Inputs (Card)
+- Deal amount input (GBP)
+- Toggle: “Amount includes VAT” vs “Amount excludes VAT”
+- Toggle: “VAT registered” yes/no (if no, VAT is 0 and VAT section hidden/disabled)
+- Show computed:
+  - Net (ex VAT)
+  - VAT pot
+  - Corporation Tax pot
+  - Dividend pool (available dividends)
+
+B) Directors & Split (Card)
+- User can add/remove directors (default 1)
+- Each director has: Name (text), Split % (number)
+- Split method selector:
+  - Equal split (auto-calculates split percentages)
+  - Custom split (user enters split % per director)
+- Validation:
+  - Custom split must total 100% (show error if not)
+  - No negative splits
+  - Allow up to 6 directors (sensible internal guardrail)
+
+C) Dividend Tax Selection (Card)
+- “Effective Dividend Tax Rate” selector with options:
+  - Basic
+  - Higher
+  - Additional
+  - Custom
+- Preset sets (in Settings):
+  - “Current” preset: Basic 8.75%, Higher 33.75%, Additional 39.35%
+  - “From April 2026” preset: Basic 10.75%, Higher 35.75%, Additional 39.35%
+- The selector uses whichever preset set is active.
+- If “Custom” is selected:
+  - show a percentage input (e.g., 12.5%)
+  - this custom rate is stored in Settings and persisted
+- Show the currently applied percent clearly in the UI (e.g., “Using 10.75%”).
+
+D) Results (Card + Table)
+- Summary tiles/cards:
+  - VAT pot
+  - Corporation Tax pot
+  - Dividend pool
+  - Total personal dividend tax (sum across directors)
+  - Total take-home (sum across directors)
+- Directors table with columns:
+  - Name
+  - Split %
+  - Dividend share
+  - Applied dividend tax rate
+  - Personal dividend tax
+  - Take-home
+- Button: “Copy Summary” copies a clean plain-text summary to clipboard (include deal amount, VAT, CT, dividend pool, per-director lines).
+
+Settings Drawer (persist in LocalStorage)
+- VAT rate (default 20%)
+- Corporation Tax rate (default 25%)
+- Dividend rate preset set: Current / From April 2026
+- Editable preset values (allow editing Basic/Higher/Additional values for the active preset)
+- Custom dividend tax rate (single value used when the user selects “Custom” on main screen)
+- Default toggles:
+  - Amount includes VAT by default (true/false)
+  - VAT registered by default (true/false)
+- Button: “Reset to defaults”
+
+Calculation rules (must match tests exactly)
+Use integer pence internally to avoid floating point issues.
+- Convert input amount to pence integer.
+- After each step (VAT, corp tax, shares, tax), round to nearest penny (Math.round).
+- Ensure director dividend shares sum exactly to the dividend pool:
+  - For equal split: divide in pence, allocate remainder pennies to the first directors until remainder is 0
+  - For percentage split: compute each share in pence, sum, then adjust the last director by the difference so totals match exactly
+
+VAT:
+If VAT registered is false:
+  vat = 0
+  net = dealAmount
+Else if includesVAT:
+  net = dealAmount / (1 + vatRate)
+  vat = dealAmount - net
+Else (excludesVAT):
+  net = dealAmount
+  vat = dealAmount * vatRate
+
+Corporation Tax:
+  corpTax = net * corpTaxRate
+Dividend pool:
+  dividendPool = net - corpTax
+
+Per-director:
+  dividendShare = dividendPool * splitPercent
+  personalDividendTax = dividendShare * chosenDividendRate
+  takeHome = dividendShare - personalDividendTax
+
+Formatting
+- Use Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }) for display.
+- Show percent inputs as percentages (e.g., 20% stored as 0.20 in code or stored as 20 and converted — be consistent).
+
+Code structure
+- src/lib/money.ts
+  - toPence, fromPence, formatGBP, roundPence helpers
+- src/lib/calc.ts
+  - Types: Settings, Director, DealInput, DealResult, DirectorResult
+  - calculateDealBreakdown(...)
+  - splitDividendPool(...)
+  - calculateDirectorResults(...)
+- src/lib/storage.ts
+  - loadSettings, saveSettings, loadLastState, saveLastState
+- src/components/
+  - SettingsDrawer.tsx
+  - DealInputsCard.tsx
+  - DirectorsCard.tsx
+  - DividendRateCard.tsx
+  - ResultsSummary.tsx
+  - DirectorsTable.tsx
+- src/App.tsx
+  - Compose the page and wire state + LocalStorage
+
+Testing (Vitest)
+Create tests in src/lib/calc.test.ts that MUST pass:
+1) Deal breakdown, includes VAT:
+- dealAmount=5000.00
+- vatRegistered=true
+- includesVAT=true
+- vatRate=0.20
+- corpTaxRate=0.25
+Expected:
+- net = 4166.67
+- vat = 833.33
+- corpTax = 1041.67
+- dividendPool = 3125.00
+
+2) Split across 2 directors equally (50/50), basic rate 8.75%:
+- each dividendShare = 1562.50
+- each personalDividendTax = 136.72
+- each takeHome = 1425.78
+
+3) Preset “From April 2026” values are available:
+- basic = 10.75%
+- higher = 35.75%
+- additional = 39.35%
+
+4) Custom rate:
+- set custom rate to 12.5%, select Custom
+- ensure applied rate is 12.5% and tax equals share * 0.125 rounded to pennies
+
+5) Design:
+The goal is “slick, modern, Material 3-inspired” — not generic MUI defaults.
+
+Overall design principles (Material 3-inspired)
+- Use a light theme by default with a clean surface hierarchy:
+  - Background = subtle neutral surface
+  - Content sits on elevated “surface containers” (Cards/Papers) with gentle shadows
+  - Clear separation between sections via spacing and elevation, not heavy borders
+- Use rounded corners consistently (Cards, inputs, buttons, table container).
+- Prefer soft dividers, subtle tonal variation, and whitespace over hard lines.
+- Motion: small, quick transitions (Drawer open/close, expanding “Advanced” areas, showing validation). Keep it subtle.
+
+Typography
+- Use a modern, readable type scale (MUI typography variants):
+  - Page title: Typography variant like h5/h6 with medium weight
+  - Section titles: subtitle1 with medium weight
+  - Supporting text: body2, slightly muted
+- Ensure strong hierarchy: section headings, then inputs, then results.
+- Numbers should be visually scannable:
+  - Make key currency figures larger and tabular-like (use CSS font-variant-numeric: tabular-nums on all money cells).
+
+Colour & styling (no hard-coded brand required)
+- Use MUI’s theme system for colour tokens.
+- Ensure accessible contrast, especially for text on coloured chips/badges.
+- Use semantic colours sparingly:
+  - “Pots” can use subtle tonal chips (VAT / Corp Tax / Dividend Pool / Personal Tax)
+  - Errors use MUI error styling; warnings use warning; success for “copy” confirmation.
+
+Layout & structure (single-page, premium feel)
+- Use a centred Container with maxWidth="md" or "lg" and a responsive grid.
+- Spacing:
+  - Use consistent vertical rhythm (e.g., 24px between major sections; 16px within sections).
+- Use a top “hero summary” area:
+  - A compact row of 3–5 summary tiles (MUI Paper) showing the live key outputs:
+    - VAT pot
+    - Corporation Tax pot
+    - Dividend Pool
+    - Total Personal Tax
+    - Total Take-home
+  - These should update instantly as inputs change.
+
+Information architecture (cards)
+1) Deal Inputs Card
+- Title row: “Deal inputs” + small helper text below (“Planning tool, ignores expenses”).
+- Deal amount field:
+  - Use OutlinedTextField with start adornment “£”.
+  - Add helper text: “Enter the invoice value for the client.”
+- Toggle group for VAT:
+  - A segmented control style using ToggleButtonGroup:
+    - “Includes VAT” / “Excludes VAT”
+- VAT registered switch:
+  - Switch with label “VAT registered”
+  - When off:
+    - Disable VAT toggle group and show a small caption: “VAT is ignored when not VAT registered.”
+- Immediately below inputs, show a compact breakdown row:
+  - Net (ex VAT), VAT pot, Corp Tax pot, Dividend pool
+  - Use a 2x2 grid of small stat blocks with labels + values.
+
+2) Directors & Split Card
+- Title row: “Directors & split” + action button “Add director”
+- Split method control:
+  - Segmented control:
+    - “Equal split” / “Custom split”
+- Directors table-style editor:
+  - Each row has:
+    - Name TextField
+    - Split % input (disabled in equal mode, enabled in custom)
+    - Remove icon button
+  - In Equal mode:
+    - Show a subtle “Auto” chip next to split %
+  - In Custom mode:
+    - Show a live “Total: 100%” indicator in the header.
+    - If not 100%, show an inline error state (don’t use a modal).
+
+3) Dividend Tax Card
+- Title: “Dividend tax assumption”
+- Rate selector:
+  - ToggleButtonGroup or Segmented Control:
+    - Basic / Higher / Additional / Custom
+- Under it, show the “Applied rate” as a prominent chip:
+  - Example: “Applied: 10.75% (From April 2026 preset)”
+- If Custom selected:
+  - Show a percent input field with end adornment “%”
+  - Add helper text: “This is a simplified effective rate assumption.”
+
+4) Results Card
+- Title row: “Results”
+- Directors results table (read-only):
+  - Columns:
+    - Director
+    - Split
+    - Dividend share
+    - Tax rate
+    - Personal tax
+    - Take-home
+  - Use a sticky header on desktop.
+  - Right-align numeric columns.
+  - Apply tabular-nums to numeric cells.
+- Below the table:
+  - “Copy summary” primary button
+  - Show a Snackbar on copy success (“Summary copied”)
+
+Interactions & micro-UX
+- Live calculation: all results update as the user types (debounce optional).
+- Validation:
+  - Deal amount must be > 0.
+  - Director count at least 1.
+  - Custom split totals 100%.
+  - If invalid, disable Copy Summary and visually highlight the issue.
+- Empty states:
+  - If deal amount is blank, summary tiles show “—” rather than £0.00 (feels more premium).
+- Rounding/pennies:
+  - If penny adjustments occur to make totals match, show a tiny info tooltip:
+    - “Adjusted by 1p to match totals.”
+
+Responsiveness
+- Mobile:
+  - Summary tiles stack (2 per row).
+  - Tables become horizontally scrollable with a nice container.
+  - Settings Drawer becomes full-height with comfortable padding.
+- Desktop:
+  - Cards align cleanly, tables have generous spacing, no cramped UI.
+
+Settings Drawer design
+- Drawer width around 360–420px on desktop.
+- Group settings into accordions or clearly separated sections:
+  - Defaults
+  - Rates
+  - Dividend presets
+- Use inline helper text for each rate.
+- Add “Reset to defaults” as a text button with confirmation dialog.
+
+Implementation specifics (MUI)
+- Use MUI ThemeProvider and createTheme.
+- Prefer:
+  - Card with CardHeader + CardContent
+  - Paper for summary tiles
+  - ToggleButtonGroup for segmented controls
+  - Snackbar for copy confirmations
+  - Divider sparingly
+- Ensure focus styles, hover states, and keyboard navigation work well.
+
+Do NOT:
+- Do not use heavy outlines everywhere; rely on elevation and spacing.
+- Do not use a cluttered layout with too many borders.
+- Do not use inconsistent corner radius or mixed component styles.
+
+Outcome
+The finished UI should feel like a modern fintech tool: calm, clean, high trust, and fast to scan.
+
+Deliverables
+- A fully working app that runs with:
+  - npm install
+  - npm run dev
+  - npm test
+- Polished UI (no placeholder styles).
+- Clean TypeScript types, readable code, and sensible component structure.
