@@ -136,7 +136,7 @@ function App() {
         <Container maxWidth="lg" sx={{ py: 4 }}>
           <Box sx={{ mb: 4 }}>
             <Typography variant="h5" sx={{ mb: 1 }} data-testid="text-page-title">Client Deal Value-to-Dividends Calculator</Typography>
-            <Typography variant="body2" color="text.secondary">Plan how a client deal converts to dividends for company directors.</Typography>
+            <Typography variant="body2" color="text.secondary">Plan how a client deal converts to dividends for company directors. TEST</Typography>
           </Box>
 
           <ResultsSummary
