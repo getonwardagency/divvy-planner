@@ -119,7 +119,7 @@ function App() {
               <img 
                 src={logoUrl} 
                 alt="DivvyPlan" 
-                style={{ height: 32 }}
+                style={{ width: 230 }}
                 data-testid="img-logo"
               />
             </Box>
