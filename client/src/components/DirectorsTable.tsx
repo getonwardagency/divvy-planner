@@ -63,7 +63,7 @@ export default function DirectorsTable({
           Results
         </Typography>
 
-        <TableContainer sx={{ mb: 3, borderRadius: 2, overflow: 'hidden' }}>
+        <TableContainer sx={{ mb: 3, borderRadius: 2, overflowX: 'auto' }}>
           <Table size="small">
             <TableHead>
               <TableRow>
