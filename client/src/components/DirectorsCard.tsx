@@ -135,7 +135,7 @@ export default function DirectorsCard({
                 alignItems: 'center',
                 gap: 2,
                 p: 2,
-                borderRadius: 2,
+                borderRadius: 1,
                 backgroundColor: 'background.default',
               }}
               data-testid={`row-director-${director.id}`}

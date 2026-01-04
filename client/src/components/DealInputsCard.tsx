@@ -35,7 +35,7 @@ function StatBlock({ label, value, color }: StatBlockProps) {
       sx={{
         p: 2,
         backgroundColor: color ? alpha(color, 0.08) : 'background.default',
-        borderRadius: 2,
+        borderRadius: 1,
         height: '100%',
       }}
     >

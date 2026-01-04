@@ -24,7 +24,7 @@ function SummaryTile({ label, value, color, testId }: SummaryTileProps) {
         textAlign: 'center',
         backgroundColor: alpha(color, 0.08),
         border: `1px solid ${alpha(color, 0.15)}`,
-        borderRadius: 3,
+        borderRadius: 1.5,
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
