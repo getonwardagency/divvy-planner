@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -16,6 +17,66 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import type { Director, SplitMethod } from '../lib/calc';
 
+interface SplitInputProps {
+  value: number;
+  disabled: boolean;
+  onCommit: (percent: number) => void;
+  testId: string;
+}
+
+function SplitInput({ value, disabled, onCommit, testId }: SplitInputProps) {
+  const [localValue, setLocalValue] = useState(() => (value * 100).toFixed(2));
+  const [isFocused, setIsFocused] = useState(false);
+
+  useEffect(() => {
+    if (!isFocused) {
+      setLocalValue((value * 100).toFixed(2));
+    }
+  }, [value, isFocused]);
+
+  const handleFocus = () => {
+    setIsFocused(true);
+    setLocalValue((value * 100).toString());
+  };
+
+  const handleBlur = () => {
+    setIsFocused(false);
+    const parsed = parseFloat(localValue);
+    if (!isNaN(parsed) && parsed >= 0 && parsed <= 100) {
+      onCommit(parsed / 100);
+    } else {
+      setLocalValue((value * 100).toFixed(2));
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setLocalValue(e.target.value);
+  };
+
+  return (
+    <TextField
+      label="Split"
+      type="number"
+      value={disabled ? (value * 100).toFixed(2) : localValue}
+      onChange={handleChange}
+      onFocus={handleFocus}
+      onBlur={handleBlur}
+      disabled={disabled}
+      size="small"
+      sx={{ width: 100 }}
+      InputProps={{
+        endAdornment: <InputAdornment position="end">%</InputAdornment>,
+      }}
+      inputProps={{
+        min: 0,
+        max: 100,
+        step: 'any',
+      }}
+      data-testid={testId}
+    />
+  );
+}
+
 interface DirectorsCardProps {
   directors: Director[];
   splitMethod: SplitMethod;
@@ -29,24 +90,95 @@ export default function DirectorsCard({
   onDirectorsChange,
   onSplitMethodChange,
 }: DirectorsCardProps) {
+  const [manuallySetIds, setManuallySetIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (splitMethod === 'equal') {
+      setManuallySetIds(new Set());
+    }
+  }, [splitMethod]);
+
+  useEffect(() => {
+    const currentIds = new Set(directors.map(d => d.id));
+    setManuallySetIds(prev => {
+      const updated = new Set<string>();
+      prev.forEach(id => {
+        if (currentIds.has(id)) {
+          updated.add(id);
+        }
+      });
+      return updated;
+    });
+  }, [directors.length]);
+
   const handleSplitMethodToggle = (_: React.MouseEvent<HTMLElement>, value: SplitMethod | null) => {
     if (value) {
       onSplitMethodChange(value);
+      if (value === 'equal') {
+        setManuallySetIds(new Set());
+      }
     }
   };
 
   const handleAddDirector = () => {
     if (directors.length >= 6) return;
     const newId = String(Date.now());
+    
+    const lockedTotal = directors
+      .filter(d => manuallySetIds.has(d.id))
+      .reduce((sum, d) => sum + d.splitPercent, 0);
+    const unlockedCount = directors.filter(d => !manuallySetIds.has(d.id)).length + 1;
+    const remainingPercent = Math.max(0, 1 - lockedTotal);
+    const perUnlocked = unlockedCount > 0 ? remainingPercent / unlockedCount : 0;
+
+    const updatedDirectors = directors.map(d => {
+      if (manuallySetIds.has(d.id)) {
+        return d;
+      }
+      return { ...d, splitPercent: perUnlocked };
+    });
+
     onDirectorsChange([
-      ...directors,
-      { id: newId, name: `Director ${directors.length + 1}`, splitPercent: 0 },
+      ...updatedDirectors,
+      { id: newId, name: `Director ${directors.length + 1}`, splitPercent: perUnlocked },
     ]);
   };
 
   const handleRemoveDirector = (id: string) => {
     if (directors.length <= 1) return;
-    onDirectorsChange(directors.filter((d) => d.id !== id));
+    
+    const wasManuallySet = manuallySetIds.has(id);
+    const removedDirector = directors.find(d => d.id === id);
+    const remaining = directors.filter((d) => d.id !== id);
+    
+    setManuallySetIds(prev => {
+      const updated = new Set(prev);
+      updated.delete(id);
+      return updated;
+    });
+    
+    if (removedDirector && remaining.length > 0) {
+      const newManuallySetIds = new Set(manuallySetIds);
+      newManuallySetIds.delete(id);
+      
+      const lockedTotal = remaining
+        .filter(d => newManuallySetIds.has(d.id))
+        .reduce((sum, d) => sum + d.splitPercent, 0);
+      const unlockedDirectors = remaining.filter(d => !newManuallySetIds.has(d.id));
+      const remainingPercent = Math.max(0, 1 - lockedTotal);
+      const perUnlocked = unlockedDirectors.length > 0 ? remainingPercent / unlockedDirectors.length : 0;
+
+      onDirectorsChange(
+        remaining.map(d => {
+          if (newManuallySetIds.has(d.id)) {
+            return d;
+          }
+          return { ...d, splitPercent: perUnlocked };
+        })
+      );
+    } else {
+      onDirectorsChange(remaining);
+    }
   };
 
   const handleNameChange = (id: string, name: string) => {
@@ -55,13 +187,32 @@ export default function DirectorsCard({
     );
   };
 
-  const handleSplitChange = (id: string, value: string) => {
-    const percent = parseFloat(value) / 100;
-    if (!isNaN(percent) && percent >= 0 && percent <= 1) {
-      onDirectorsChange(
-        directors.map((d) => (d.id === id ? { ...d, splitPercent: percent } : d))
-      );
-    }
+  const handleSplitCommit = (id: string, newPercent: number) => {
+    const clampedPercent = Math.min(1, Math.max(0, newPercent));
+    
+    const newManuallySetIds = new Set(manuallySetIds);
+    newManuallySetIds.add(id);
+    setManuallySetIds(newManuallySetIds);
+    
+    const lockedTotal = directors
+      .filter(d => newManuallySetIds.has(d.id) && d.id !== id)
+      .reduce((sum, d) => sum + d.splitPercent, 0) + clampedPercent;
+    
+    const unlockedDirectors = directors.filter(d => !newManuallySetIds.has(d.id));
+    const remainingPercent = Math.max(0, 1 - lockedTotal);
+    const perUnlocked = unlockedDirectors.length > 0 ? remainingPercent / unlockedDirectors.length : 0;
+    
+    onDirectorsChange(
+      directors.map(d => {
+        if (d.id === id) {
+          return { ...d, splitPercent: clampedPercent };
+        }
+        if (newManuallySetIds.has(d.id)) {
+          return d;
+        }
+        return { ...d, splitPercent: perUnlocked };
+      })
+    );
   };
 
   const totalSplit = directors.reduce((sum, d) => sum + d.splitPercent, 0);
@@ -148,25 +299,12 @@ export default function DirectorsCard({
                 sx={{ flex: 1, minWidth: 120 }}
                 data-testid={`input-director-name-${director.id}`}
               />
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <TextField
-                  label="Split"
-                  type="number"
-                  value={
-                    splitMethod === 'equal'
-                      ? equalSplit.toFixed(2)
-                      : (director.splitPercent * 100).toFixed(2)
-                  }
-                  onChange={(e) => handleSplitChange(director.id, e.target.value)}
-                  disabled={splitMethod === 'equal'}
-                  size="small"
-                  sx={{ width: 100 }}
-                  InputProps={{
-                    endAdornment: <InputAdornment position="end">%</InputAdornment>,
-                  }}
-                  data-testid={`input-director-split-${director.id}`}
-                />
-              </Box>
+              <SplitInput
+                value={splitMethod === 'equal' ? equalSplit / 100 : director.splitPercent}
+                disabled={splitMethod === 'equal'}
+                onCommit={(percent) => handleSplitCommit(director.id, percent)}
+                testId={`input-director-split-${director.id}`}
+              />
               <IconButton
                 onClick={() => handleRemoveDirector(director.id)}
                 disabled={directors.length <= 1}
