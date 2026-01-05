@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -15,6 +16,67 @@ import {
 import DeleteIcon from '@mui/icons-material/Delete';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import type { Director, SplitMethod } from '../lib/calc';
+
+interface SplitInputProps {
+  value: number;
+  onChange: (value: number) => void;
+  disabled?: boolean;
+  testId: string;
+}
+
+function SplitInput({ value, onChange, disabled, testId }: SplitInputProps) {
+  const [localValue, setLocalValue] = useState(() => (value * 100).toFixed(2));
+  const [isFocused, setIsFocused] = useState(false);
+
+  useEffect(() => {
+    if (!isFocused || disabled) {
+      setLocalValue((value * 100).toFixed(2));
+    }
+  }, [value, isFocused, disabled]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (disabled) return;
+    const input = e.target.value;
+    if (input === '' || /^[0-9]*\.?[0-9]*$/.test(input)) {
+      setLocalValue(input);
+    }
+  };
+
+  const handleBlur = () => {
+    setIsFocused(false);
+    if (disabled) return;
+    const percent = parseFloat(localValue) / 100;
+    if (!isNaN(percent) && percent >= 0 && percent <= 1) {
+      onChange(percent);
+      setLocalValue(percent * 100 + '');
+    } else {
+      setLocalValue((value * 100).toFixed(2));
+    }
+  };
+
+  const handleFocus = () => {
+    if (disabled) return;
+    setIsFocused(true);
+  };
+
+  return (
+    <TextField
+      label="Split"
+      inputMode="decimal"
+      value={localValue}
+      onChange={handleChange}
+      onBlur={handleBlur}
+      onFocus={handleFocus}
+      disabled={disabled}
+      size="small"
+      sx={{ width: 100 }}
+      InputProps={{
+        endAdornment: <InputAdornment position="end">%</InputAdornment>,
+      }}
+      data-testid={testId}
+    />
+  );
+}
 
 interface DirectorsCardProps {
   directors: Director[];
@@ -55,13 +117,10 @@ export default function DirectorsCard({
     );
   };
 
-  const handleSplitChange = (id: string, value: string) => {
-    const percent = parseFloat(value) / 100;
-    if (!isNaN(percent) && percent >= 0 && percent <= 1) {
-      onDirectorsChange(
-        directors.map((d) => (d.id === id ? { ...d, splitPercent: percent } : d))
-      );
-    }
+  const handleSplitChange = (id: string, percent: number) => {
+    onDirectorsChange(
+      directors.map((d) => (d.id === id ? { ...d, splitPercent: percent } : d))
+    );
   };
 
   const totalSplit = directors.reduce((sum, d) => sum + d.splitPercent, 0);
@@ -148,25 +207,12 @@ export default function DirectorsCard({
                 sx={{ flex: 1, minWidth: 120 }}
                 data-testid={`input-director-name-${director.id}`}
               />
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <TextField
-                  label="Split"
-                  type="number"
-                  value={
-                    splitMethod === 'equal'
-                      ? equalSplit.toFixed(2)
-                      : (director.splitPercent * 100).toFixed(2)
-                  }
-                  onChange={(e) => handleSplitChange(director.id, e.target.value)}
-                  disabled={splitMethod === 'equal'}
-                  size="small"
-                  sx={{ width: 100 }}
-                  InputProps={{
-                    endAdornment: <InputAdornment position="end">%</InputAdornment>,
-                  }}
-                  data-testid={`input-director-split-${director.id}`}
-                />
-              </Box>
+              <SplitInput
+                value={splitMethod === 'equal' ? equalSplit / 100 : director.splitPercent}
+                onChange={(percent) => handleSplitChange(director.id, percent)}
+                disabled={splitMethod === 'equal'}
+                testId={`input-director-split-${director.id}`}
+              />
               <IconButton
                 onClick={() => handleRemoveDirector(director.id)}
                 disabled={directors.length <= 1}
