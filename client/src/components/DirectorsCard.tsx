@@ -166,14 +166,6 @@ export default function DirectorsCard({
                   }}
                   data-testid={`input-director-split-${director.id}`}
                 />
-                {splitMethod === 'equal' && (
-                  <Chip
-                    label="Auto"
-                    size="small"
-                    variant="outlined"
-                    sx={{ fontSize: '0.7rem' }}
-                  />
-                )}
               </Box>
               <IconButton
                 onClick={() => handleRemoveDirector(director.id)}
